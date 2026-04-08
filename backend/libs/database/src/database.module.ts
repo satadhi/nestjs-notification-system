@@ -1,8 +1,17 @@
 import { Module } from '@nestjs/common';
-import { DatabaseService } from './database.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { getDatabaseConfig } from './database.config';
 
-@Module({
-  providers: [DatabaseService],
-  exports: [DatabaseService],
-})
-export class DatabaseModule {}
+@Module({})
+export class DatabaseModule {
+  static forRoot(schema: string) {
+    return {
+      module: DatabaseModule,
+      imports: [
+        TypeOrmModule.forRootAsync({
+          useFactory: () => getDatabaseConfig(schema),
+        }),
+      ],
+    };
+  }
+}
