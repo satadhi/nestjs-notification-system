@@ -12,24 +12,24 @@ npm run start:dev notification-service
 1. Ideally per service should have 1 db but we are doing something funny i.e per service we will have 1 table and that service will be responsible for that table and anything else we will use communication between service if I have to update some other table
 
 
-2. API call
+2. API call order-service
 
-`POST /orders`
+`POST http://localhost:3000/orders`
 
 ```json
 {
-  "userId": 1,
+  "userId": 101,
   "items": [
     {
       "productId": "p1",
-      "productName": "iPhone",
-      "price": 50000,
+      "productName": "iPhone 15",
+      "price": 79999,
       "quantity": 1
     },
     {
       "productId": "p2",
-      "productName": "AirPods",
-      "price": 10000,
+      "productName": "AirPods Pro",
+      "price": 24999,
       "quantity": 2
     }
   ]
