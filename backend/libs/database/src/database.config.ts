@@ -1,13 +1,18 @@
+import { ConfigService } from '@nestjs/config';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { EntityClassOrSchema } from '@nestjs/typeorm/dist/interfaces/entity-class-or-schema.type';
 
-export const getDatabaseConfig = (schema: string): TypeOrmModuleOptions => ({
+export const getDatabaseConfig = (
+  entities: EntityClassOrSchema[],
+  configService: ConfigService,
+): TypeOrmModuleOptions => ({
   type: 'postgres',
-  host: process.env.DB_HOST,
+  host: configService.get<string>('DB_HOST'),
   port: 5432,
-  username: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
-  schema, 
-  autoLoadEntities: true,
+  username: configService.get<string>('DB_USER'),
+  password: configService.get<string>('DB_PASS'),
+  database: configService.get<string>('DB_NAME'),
+
+  entities,
   synchronize: true,
 });

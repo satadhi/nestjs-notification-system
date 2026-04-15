@@ -19,7 +19,7 @@ export class Order {
   status: string;
 
   @OneToMany(() => OrderItem, (item) => item.order, {
-    cascade: true, // 👈 auto save items
+    cascade: true,
   })
   items: OrderItem[];
 
