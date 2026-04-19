@@ -1,5 +1,3 @@
-import { ConsumeMessage } from 'amqplib';
-
 export type OrderEventItem = {
   productId: string;
   productName: string;
@@ -54,17 +52,4 @@ export type OrderCancelledEvent = {
   userId: number;
   status: string;
   reason: string;
-};
-
-export type RabbitMqConsumedMessage<TPayload> = {
-  payload: TPayload;
-  routingKey: string;
-  rawMessage: ConsumeMessage;
-};
-
-export type RabbitMqSubscription<TPayload> = {
-  queue: string;
-  routingKeys: string[];
-  handler: (message: RabbitMqConsumedMessage<TPayload>) => Promise<void> | void;
-  prefetchCount?: number;
 };

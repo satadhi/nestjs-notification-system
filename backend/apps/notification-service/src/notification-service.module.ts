@@ -6,7 +6,6 @@ import { DatabaseModule } from '@app/database';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as path from 'path';
 import { Notification } from './entities/notification.entity';
-import { RabbitMqModule } from '@app/common';
 
 @Module({
   imports: [
@@ -16,7 +15,6 @@ import { RabbitMqModule } from '@app/common';
     }),
     DatabaseModule.forRoot([Notification]),
     TypeOrmModule.forFeature([Notification]),
-    RabbitMqModule,
   ],
   controllers: [NotificationServiceController],
   providers: [NotificationServiceService],

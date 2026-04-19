@@ -1,38 +1,34 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ClientProxy } from '@nestjs/microservices';
+import { DataSource, Repository } from 'typeorm';
+import { firstValueFrom } from 'rxjs';
+import { Inventory } from './entities/inventory.entity';
+import { InventoryLog } from './entities/inventory-log.entity';
 import {
   EVENTS,
   InventoryFailedEvent,
   InventoryReservedEvent,
   PaymentCompletedEvent,
-  QUEUES,
-  RabbitMqService,
+  RMQ_CLIENTS,
 } from '@app/common';
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Inventory } from './entities/inventory.entity';
-import { InventoryLog } from './entities/inventory-log.entity';
-import { DataSource, Repository } from 'typeorm';
 
 @Injectable()
-export class InventoryServiceService implements OnModuleInit {
+export class InventoryServiceService {
   constructor(
     @InjectRepository(Inventory)
     private readonly inventoryRepository: Repository<Inventory>,
     private readonly dataSource: DataSource,
-    private readonly rabbitMqService: RabbitMqService,
+    @Inject(RMQ_CLIENTS.ORDER)
+    private readonly orderClient: ClientProxy,
   ) {}
 
   getHello(): string {
     return 'Inventory service is running';
   }
 
-  async onModuleInit() {
-    await this.rabbitMqService.subscribe<PaymentCompletedEvent>({
-      queue: QUEUES.INVENTORY,
-      routingKeys: [EVENTS.PAYMENT_COMPLETED],
-      handler: async ({ payload }) => {
-        await this.reserveInventory(payload);
-      },
-    });
+  async handlePaymentCompleted(event: PaymentCompletedEvent) {
+    await this.reserveInventory(event);
   }
 
   private async reserveInventory(event: PaymentCompletedEvent) {
@@ -56,7 +52,11 @@ export class InventoryServiceService implements OnModuleInit {
         items: event.items,
       };
 
-      await this.rabbitMqService.publish(EVENTS.INVENTORY_FAILED, inventoryFailedEvent);
+      await this.emitEvent(
+        this.orderClient,
+        EVENTS.INVENTORY_FAILED,
+        inventoryFailedEvent,
+      );
       return;
     }
 
@@ -85,6 +85,20 @@ export class InventoryServiceService implements OnModuleInit {
       items: event.items,
     };
 
-    await this.rabbitMqService.publish(EVENTS.INVENTORY_RESERVED, inventoryReservedEvent);
+    await this.emitEvent(
+      this.orderClient,
+      EVENTS.INVENTORY_RESERVED,
+      inventoryReservedEvent,
+    );
+  }
+
+  private async emitEvent<TPayload>(
+    client: ClientProxy,
+    pattern: string,
+    payload: TPayload,
+  ) {
+    await firstValueFrom(client.emit(pattern, payload), {
+      defaultValue: undefined,
+    });
   }
 }

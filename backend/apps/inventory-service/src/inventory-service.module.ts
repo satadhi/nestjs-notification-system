@@ -7,7 +7,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import * as path from 'path';
 import { Inventory } from './entities/inventory.entity';
 import { InventoryLog } from './entities/inventory-log.entity';
-import { RabbitMqModule } from '@app/common';
+import { ClientsModule } from '@nestjs/microservices';
+import {
+  createRmqClientProvider,
+  RMQ_CLIENTS,
+  QUEUES,
+} from '@app/common';
 
 @Module({
   imports: [
@@ -17,7 +22,9 @@ import { RabbitMqModule } from '@app/common';
     }),
     DatabaseModule.forRoot([Inventory, InventoryLog]),
     TypeOrmModule.forFeature([Inventory, InventoryLog]),
-    RabbitMqModule,
+    ClientsModule.registerAsync([
+      createRmqClientProvider(RMQ_CLIENTS.ORDER, QUEUES.ORDER),
+    ]),
   ],
   controllers: [InventoryServiceController],
   providers: [InventoryServiceService],

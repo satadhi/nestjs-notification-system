@@ -7,7 +7,7 @@ npm run start:dev inventory-service
 npm run start:dev notification-service
 ```
 
-RabbitMQ defaults to `amqp://admin:admin@localhost:5672` and publishes all saga events to the `saga.events` topic exchange.
+RabbitMQ defaults to `amqp://admin:admin@localhost:5672` and each service listens on its own queue using NestJS `@EventPattern()` handlers.
 
 Ports:
 

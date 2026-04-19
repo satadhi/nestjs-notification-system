@@ -6,7 +6,12 @@ import { DatabaseModule } from '@app/database';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as path from 'path';
 import { Payment } from './entities/payment.entity';
-import { RabbitMqModule } from '@app/common';
+import { ClientsModule } from '@nestjs/microservices';
+import {
+  createRmqClientProvider,
+  RMQ_CLIENTS,
+  QUEUES,
+} from '@app/common';
 
 @Module({
   imports: [
@@ -16,7 +21,10 @@ import { RabbitMqModule } from '@app/common';
     }),
     DatabaseModule.forRoot([Payment]),
     TypeOrmModule.forFeature([Payment]),
-    RabbitMqModule,
+    ClientsModule.registerAsync([
+      createRmqClientProvider(RMQ_CLIENTS.INVENTORY, QUEUES.INVENTORY),
+      createRmqClientProvider(RMQ_CLIENTS.ORDER, QUEUES.ORDER),
+    ]),
   ],
   controllers: [PaymentServiceController],
   providers: [PaymentServiceService],

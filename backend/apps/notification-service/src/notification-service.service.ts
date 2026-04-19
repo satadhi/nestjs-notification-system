@@ -1,45 +1,41 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Notification } from './entities/notification.entity';
 import {
   EVENTS,
   OrderCancelledEvent,
   OrderCompletedEvent,
-  QUEUES,
-  RabbitMqService,
 } from '@app/common';
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Notification } from './entities/notification.entity';
-import { Repository } from 'typeorm';
 
 @Injectable()
-export class NotificationServiceService implements OnModuleInit {
+export class NotificationServiceService {
   constructor(
     @InjectRepository(Notification)
     private readonly notificationRepository: Repository<Notification>,
-    private readonly rabbitMqService: RabbitMqService,
   ) {}
 
   getHello(): string {
     return 'Notification service is running';
   }
 
-  async onModuleInit() {
-    await this.rabbitMqService.subscribe<OrderCompletedEvent | OrderCancelledEvent>({
-      queue: QUEUES.NOTIFICATION,
-      routingKeys: [EVENTS.ORDER_COMPLETED, EVENTS.ORDER_CANCELLED],
-      handler: async ({ routingKey, payload }) => {
-        const isCompleted = routingKey === EVENTS.ORDER_COMPLETED;
-        const message = isCompleted
-          ? `Order ${payload.orderId} completed successfully`
-          : `Order ${payload.orderId} was cancelled${'reason' in payload ? `: ${payload.reason}` : ''}`;
+  async handleOrderCompleted(payload: OrderCompletedEvent) {
+    await this.notificationRepository.save({
+      orderId: payload.orderId,
+      type: EVENTS.ORDER_COMPLETED,
+      recipient: `user:${payload.userId}`,
+      message: `Order ${payload.orderId} completed successfully`,
+      status: 'sent',
+    });
+  }
 
-        await this.notificationRepository.save({
-          orderId: payload.orderId,
-          type: routingKey,
-          recipient: `user:${payload.userId}`,
-          message,
-          status: 'sent',
-        });
-      },
+  async handleOrderCancelled(payload: OrderCancelledEvent) {
+    await this.notificationRepository.save({
+      orderId: payload.orderId,
+      type: EVENTS.ORDER_CANCELLED,
+      recipient: `user:${payload.userId}`,
+      message: `Order ${payload.orderId} was cancelled: ${payload.reason}`,
+      status: 'sent',
     });
   }
 }

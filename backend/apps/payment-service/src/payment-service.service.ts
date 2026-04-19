@@ -1,36 +1,34 @@
+import { Inject, Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { ClientProxy } from '@nestjs/microservices';
+import { Repository } from 'typeorm';
+import { firstValueFrom } from 'rxjs';
+import { Payment } from './entities/payment.entity';
 import {
   EVENTS,
   OrderCreatedEvent,
   PaymentCompletedEvent,
   PaymentFailedEvent,
-  QUEUES,
-  RabbitMqService,
+  RMQ_CLIENTS,
 } from '@app/common';
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Payment } from './entities/payment.entity';
-import { Repository } from 'typeorm';
 
 @Injectable()
-export class PaymentServiceService implements OnModuleInit {
+export class PaymentServiceService {
   constructor(
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
-    private readonly rabbitMqService: RabbitMqService,
+    @Inject(RMQ_CLIENTS.INVENTORY)
+    private readonly inventoryClient: ClientProxy,
+    @Inject(RMQ_CLIENTS.ORDER)
+    private readonly orderClient: ClientProxy,
   ) {}
 
   getHello(): string {
     return 'Payment service is running';
   }
 
-  async onModuleInit() {
-    await this.rabbitMqService.subscribe<OrderCreatedEvent>({
-      queue: QUEUES.PAYMENT,
-      routingKeys: [EVENTS.ORDER_CREATED],
-      handler: async ({ payload }) => {
-        await this.processPayment(payload);
-      },
-    });
+  async handleOrderCreated(event: OrderCreatedEvent) {
+    await this.processPayment(event);
   }
 
   private async processPayment(event: OrderCreatedEvent) {
@@ -53,7 +51,11 @@ export class PaymentServiceService implements OnModuleInit {
         items: event.items,
       };
 
-      await this.rabbitMqService.publish(EVENTS.PAYMENT_FAILED, paymentFailedEvent);
+      await this.emitEvent(
+        this.orderClient,
+        EVENTS.PAYMENT_FAILED,
+        paymentFailedEvent,
+      );
       return;
     }
 
@@ -65,10 +67,24 @@ export class PaymentServiceService implements OnModuleInit {
       items: event.items,
     };
 
-    await this.rabbitMqService.publish(EVENTS.PAYMENT_COMPLETED, paymentCompletedEvent);
+    await this.emitEvent(
+      this.inventoryClient,
+      EVENTS.PAYMENT_COMPLETED,
+      paymentCompletedEvent,
+    );
   }
 
   private shouldFailPayment() {
     return (process.env.PAYMENT_FORCE_FAIL ?? '').toLowerCase() === 'true';
+  }
+
+  private async emitEvent<TPayload>(
+    client: ClientProxy,
+    pattern: string,
+    payload: TPayload,
+  ) {
+    await firstValueFrom(client.emit(pattern, payload), {
+      defaultValue: undefined,
+    });
   }
 }
