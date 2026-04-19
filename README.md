@@ -1,4 +1,4 @@
-# Run instruction 
+# Run instruction
 
 ```shell
 npm run start:dev order-service
@@ -6,6 +6,28 @@ npm run start:dev payment-service
 npm run start:dev inventory-service
 npm run start:dev notification-service
 ```
+
+RabbitMQ defaults to `amqp://admin:admin@localhost:5672` and publishes all saga events to the `saga.events` topic exchange.
+
+Ports:
+
+- `order-service`: `3001`
+- `payment-service`: `3002`
+- `inventory-service`: `3003`
+- `notification-service`: `3004`
+
+Saga flow:
+
+- `order-service` saves the order and publishes `order.created`
+- `payment-service` consumes `order.created` and publishes `payment.completed` or `payment.failed`
+- `inventory-service` consumes `payment.completed` and publishes `inventory.reserved` or `inventory.failed`
+- `order-service` consumes the result events and updates the final order state
+- `notification-service` consumes `order.completed` and `order.cancelled`
+
+Optional env vars:
+
+- `RABBITMQ_URL=amqp://admin:admin@localhost:5672`
+- `PAYMENT_FORCE_FAIL=true`
 
 # More Understanding of how to design
 

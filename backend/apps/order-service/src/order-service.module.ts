@@ -7,6 +7,7 @@ import { OrderItem } from './entities/order-item.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import * as path from 'path';
+import { RabbitMqModule } from '@app/common';
 
 @Module({
   imports: [
@@ -14,8 +15,9 @@ import * as path from 'path';
       isGlobal: true,
       envFilePath: path.resolve(process.cwd(), 'apps/order-service/.env'),
     }),
-      DatabaseModule.forRoot([Order, OrderItem]),
-      TypeOrmModule.forFeature([Order, OrderItem]), 
+    DatabaseModule.forRoot([Order, OrderItem]),
+    TypeOrmModule.forFeature([Order, OrderItem]),
+    RabbitMqModule,
   ],
   controllers: [OrderServiceController],
   providers: [OrderServiceService],

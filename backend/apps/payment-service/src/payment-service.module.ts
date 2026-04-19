@@ -6,6 +6,7 @@ import { DatabaseModule } from '@app/database';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import * as path from 'path';
 import { Payment } from './entities/payment.entity';
+import { RabbitMqModule } from '@app/common';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { Payment } from './entities/payment.entity';
     }),
     DatabaseModule.forRoot([Payment]),
     TypeOrmModule.forFeature([Payment]),
+    RabbitMqModule,
   ],
   controllers: [PaymentServiceController],
   providers: [PaymentServiceService],

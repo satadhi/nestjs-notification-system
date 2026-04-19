@@ -8,15 +8,22 @@ describe('InventoryServiceController', () => {
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [InventoryServiceController],
-      providers: [InventoryServiceService],
+      providers: [
+        {
+          provide: InventoryServiceService,
+          useValue: {
+            getHello: jest.fn().mockReturnValue('Inventory service is running'),
+          },
+        },
+      ],
     }).compile();
 
     inventoryServiceController = app.get<InventoryServiceController>(InventoryServiceController);
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(inventoryServiceController.getHello()).toBe('Hello World!');
+    it('should return service health text', () => {
+      expect(inventoryServiceController.getHello()).toBe('Inventory service is running');
     });
   });
 });

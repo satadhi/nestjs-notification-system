@@ -1,7 +1,7 @@
 export const EVENTS = {
   ORDER_CREATED: 'order.created',
 
-  PAYMENT_SUCCESS: 'payment.success',
+  PAYMENT_COMPLETED: 'payment.completed',
   PAYMENT_FAILED: 'payment.failed',
 
   INVENTORY_RESERVED: 'inventory.reserved',

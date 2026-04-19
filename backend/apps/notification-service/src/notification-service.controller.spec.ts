@@ -8,15 +8,22 @@ describe('NotificationServiceController', () => {
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [NotificationServiceController],
-      providers: [NotificationServiceService],
+      providers: [
+        {
+          provide: NotificationServiceService,
+          useValue: {
+            getHello: jest.fn().mockReturnValue('Notification service is running'),
+          },
+        },
+      ],
     }).compile();
 
     notificationServiceController = app.get<NotificationServiceController>(NotificationServiceController);
   });
 
   describe('root', () => {
-    it('should return "Hello World!"', () => {
-      expect(notificationServiceController.getHello()).toBe('Hello World!');
+    it('should return service health text', () => {
+      expect(notificationServiceController.getHello()).toBe('Notification service is running');
     });
   });
 });

@@ -7,6 +7,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import * as path from 'path';
 import { Inventory } from './entities/inventory.entity';
 import { InventoryLog } from './entities/inventory-log.entity';
+import { RabbitMqModule } from '@app/common';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { InventoryLog } from './entities/inventory-log.entity';
     }),
     DatabaseModule.forRoot([Inventory, InventoryLog]),
     TypeOrmModule.forFeature([Inventory, InventoryLog]),
+    RabbitMqModule,
   ],
   controllers: [InventoryServiceController],
   providers: [InventoryServiceService],
